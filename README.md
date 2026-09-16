@@ -21,6 +21,22 @@ A arquitetura foi desenhada para alta disponibilidade e performance em ambientes
 3. **Auditoria e Ajustes:** Despesas de meses já fechados recebem bloqueio lógico para edição. Correções necessárias geram "gastos de ajustes" automáticos no ciclo subsequente.
 4. **Dupla Validação de Quitação:** A transição do status da dívida exige o aceite duplo: o devedor sinaliza que o PIX foi feito, e o credor valida o recebimento na conta bancária.
 
+## 📂 Estrutura do Projeto (Arquitetura)
+
+O projeto adota a arquitetura de camadas (Controller-Service-Route) para separar responsabilidades. Isso mantém os arquivos organizados, impede rotas "gordas" e facilita os testes do algoritmo matemático de forma isolada.
+
+```text
+/src
+  ├── /config         # Conexão com o Turso e variáveis de ambiente
+  ├── /routes         # Definição dos endpoints e injeção de validações
+  ├── /controllers    # Recebe a requisição, chama o Service e retorna o status HTTP
+  ├── /services       # A lógica pesada: algoritmo de fechamento, cálculos de repasse
+  ├── /schemas        # Tipagem (ex: Zod) para validar o JSON de entrada
+  ├── /middlewares    # Filtros de segurança (ex: verificação do token JWT)
+  ├── app.ts          # Configuração do Fastify e registro de plugins
+  └── server.ts       # Ponto de entrada (entrypoint) para rodar a aplicação
+```
+
 ## 🗄️ Esquema do Banco de Dados
 
 O banco de dados relacional foi modelado para suportar offline-first no mobile, utilizando UUIDs gerados no cliente e salvos como "TEXT".
