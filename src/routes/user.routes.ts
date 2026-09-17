@@ -1,0 +1,6 @@
+import type { FastifyInstance } from "fastify";
+import { registerUserController } from "../controllers/user.controller.js";
+
+export const userRoutes = async (app: FastifyInstance) => {
+    app.post("/auth/register", registerUserController);
+};
