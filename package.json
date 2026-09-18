@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/danniel-rodrigues/numa-api#readme",
   "dependencies": {
+    "@fastify/jwt": "^10.2.2",
     "@libsql/client": "^0.18.0",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",

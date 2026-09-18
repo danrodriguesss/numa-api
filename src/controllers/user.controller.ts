@@ -1,6 +1,9 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
-import { registerUserSchema } from "../schemas/user.schema.js";
-import { createUserService } from "../services/user.service.js";
+import { registerUserSchema, loginSchema } from "../schemas/user.schema.js";
+import {
+    createUserService,
+    authenticateUserService,
+} from "../services/user.service.js";
 
 export const registerUserController = async (
     req: FastifyRequest,
@@ -25,7 +28,7 @@ export const registerUserController = async (
                 success: false,
                 error: {
                     code: "VALIDATION_ERROR",
-                    message: "Dados inválidos na requisição",
+                    message: "Dados inválidos na requisição.",
                     details: error.errors,
                 },
             });
@@ -43,6 +46,66 @@ export const registerUserController = async (
         }
 
         // Erro genérico do servidor
+        return reply.status(500).send({
+            success: false,
+            error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Ocorreu um erro inesperado no servidor.",
+            },
+        });
+    }
+};
+
+export const loginController = async (
+    req: FastifyRequest,
+    reply: FastifyReply,
+) => {
+    try {
+        const data = loginSchema.parse(req.body);
+
+        // Autentica o usuário no banco
+        const user = await authenticateUserService(data);
+
+        // Gera o token JWT contendo o ID do usuário escondido (sub)
+        const token = await reply.jwtSign(
+            {
+                sub: user.id,
+                name: user.name,
+            },
+            {
+                expiresIn: "7d",
+            },
+        );
+
+        return reply.status(200).send({
+            success: true,
+            data: {
+                user,
+                token,
+            },
+        });
+    } catch (error: any) {
+        if (error.name === "ZodError") {
+            return reply.status(422).send({
+                success: false,
+                error: {
+                    code: "VALIDATION_ERROR",
+                    message: "Dados inválidos na requisição.",
+                    details: error.errors,
+                },
+            });
+        }
+
+        if (error.message === "INVALID_CREDENTIALS") {
+            return reply.status(401).send({
+                success: false,
+                error: {
+                    code: "UNAUTHORIZED",
+                    message: "E-mail ou senha incorretos.",
+                },
+            });
+        }
+
         return reply.status(500).send({
             success: false,
             error: {

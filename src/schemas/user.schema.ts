@@ -9,3 +9,10 @@ export const registerUserSchema = z.object({
 
 // Extrai a tipagem do Zod para ser usada no TypeScript
 export type RegisterUserInput = z.infer<typeof registerUserSchema>;
+
+export const loginSchema = z.object({
+    email: z.email("Formato de e-mail inválido"),
+    password: z.string().min(1, "A senha é obrigatória"),
+});
+
+export type LoginInput = z.infer<typeof loginSchema>;
