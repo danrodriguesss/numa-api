@@ -16,3 +16,9 @@ export const loginSchema = z.object({
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;
+
+export const updatePixSchema = z.object({
+    pixKey: z.string().min(5, "A chave pix deve ter no mínimo 5 caracteres"),
+});
+
+export type UpdatePixInput = z.infer<typeof updatePixSchema>;

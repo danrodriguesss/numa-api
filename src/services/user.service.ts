@@ -2,7 +2,11 @@ import { db } from "../config/database.js";
 import { users } from "../config/schema.js";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
-import type { RegisterUserInput, LoginInput } from "../schemas/user.schema.js";
+import type {
+    RegisterUserInput,
+    LoginInput,
+    UpdatePixInput,
+} from "../schemas/user.schema.js";
 
 export const createUserService = async (data: RegisterUserInput) => {
     // Verifica se o e-mail já existe no banco
@@ -81,4 +85,23 @@ export const getUserProfileService = async (userId: string) => {
     if (!user) throw new Error("USER_NOT_FOUND");
 
     return user;
+};
+
+export const updatePixKeyService = async (
+    userId: string,
+    data: UpdatePixInput,
+) => {
+    // Atualiza a linha onde o ID é igual ao ID do usuário logado e retorna o novo valor
+    const [updatedUser] = await db
+        .update(users)
+        .set({ pixKey: data.pixKey })
+        .where(eq(users.id, userId))
+        .returning({
+            id: users.id,
+            pixKey: users.pixKey,
+        });
+
+    if (!updatedUser) throw new Error("USER_NOT_FOUND");
+
+    return updatedUser;
 };

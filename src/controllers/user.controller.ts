@@ -1,9 +1,14 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
-import { registerUserSchema, loginSchema } from "../schemas/user.schema.js";
+import {
+    registerUserSchema,
+    loginSchema,
+    updatePixSchema,
+} from "../schemas/user.schema.js";
 import {
     createUserService,
     authenticateUserService,
     getUserProfileService,
+    updatePixKeyService,
 } from "../services/user.service.js";
 
 export const registerUserController = async (
@@ -140,6 +145,53 @@ export const getMeController = async (
                 },
             });
         }
+        return reply.status(500).send({
+            success: false,
+            error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Ocorreu um erro inesperado no servidor.",
+            },
+        });
+    }
+};
+
+export const updatePixController = async (
+    req: FastifyRequest,
+    reply: FastifyReply,
+) => {
+    try {
+        const data = updatePixSchema.parse(req.body);
+        const userId = req.user.sub; // Pega do token JWT
+
+        const updatedUser = await updatePixKeyService(userId, data);
+
+        return reply.status(200).send({
+            success: true,
+            data: updatedUser,
+            message: "Chave PIX atualizada com sucesso!",
+        });
+    } catch (error: any) {
+        if (error.name === "ZodError") {
+            reply.status(422).send({
+                success: false,
+                error: {
+                    code: "VALIDATION_ERROR",
+                    message: "Formato de chave PIX inválido.",
+                    details: error.errors,
+                },
+            });
+        }
+
+        if (error.message === "USER_NOT_FOUND") {
+            return reply.status(404).send({
+                success: false,
+                error: {
+                    code: "USER_NOT_FOUND",
+                    message: "Usuário não encontrado.",
+                },
+            });
+        }
+
         return reply.status(500).send({
             success: false,
             error: {
