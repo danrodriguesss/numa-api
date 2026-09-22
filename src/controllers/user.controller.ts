@@ -35,7 +35,7 @@ export const registerUserController = async (
                 error: {
                     code: "VALIDATION_ERROR",
                     message: "Dados inválidos na requisição.",
-                    details: error.errors,
+                    details: error.issues,
                 },
             });
         }
@@ -97,7 +97,7 @@ export const loginController = async (
                 error: {
                     code: "VALIDATION_ERROR",
                     message: "Dados inválidos na requisição.",
-                    details: error.errors,
+                    details: error.issues,
                 },
             });
         }
