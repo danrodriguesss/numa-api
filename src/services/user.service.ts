@@ -63,3 +63,22 @@ export const authenticateUserService = async (data: LoginInput) => {
         email: user.email,
     };
 };
+
+export const getUserProfileService = async (userId: string) => {
+    const user = await db
+        .select({
+            id: users.id,
+            name: users.name,
+            email: users.email,
+            pixKey: users.pixKey,
+            avatarUrl: users.avatarUrl,
+            createdAt: users.createdAt,
+        })
+        .from(users)
+        .where(eq(users.id, userId))
+        .get();
+
+    if (!user) throw new Error("USER_NOT_FOUND");
+
+    return user;
+};

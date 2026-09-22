@@ -3,6 +3,7 @@ import { registerUserSchema, loginSchema } from "../schemas/user.schema.js";
 import {
     createUserService,
     authenticateUserService,
+    getUserProfileService,
 } from "../services/user.service.js";
 
 export const registerUserController = async (
@@ -106,6 +107,30 @@ export const loginController = async (
             });
         }
 
+        return reply.status(500).send({
+            success: false,
+            error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Ocorreu um erro inesperado no servidor.",
+            },
+        });
+    }
+};
+
+export const getMeController = async (
+    req: FastifyRequest,
+    reply: FastifyReply,
+) => {
+    try {
+        // Graças ao @types criado, o TS sabe que req.user existe e tem um sub
+        const userId = req.user.sub;
+        const userProfile = await getUserProfileService(userId);
+
+        return reply.status(200).send({
+            success: true,
+            data: userProfile,
+        });
+    } catch (error) {
         return reply.status(500).send({
             success: false,
             error: {
