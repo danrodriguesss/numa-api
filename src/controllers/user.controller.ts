@@ -130,7 +130,16 @@ export const getMeController = async (
             success: true,
             data: userProfile,
         });
-    } catch (error) {
+    } catch (error: any) {
+        if (error.message === "USER_NOT_FOUND") {
+            return reply.status(404).send({
+                success: false,
+                error: {
+                    code: "USER_NOT_FOUND",
+                    message: "Usuário não encontrado.",
+                },
+            });
+        }
         return reply.status(500).send({
             success: false,
             error: {
