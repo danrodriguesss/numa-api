@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `pix_key_type` text;

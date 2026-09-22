@@ -33,6 +33,7 @@ O projeto adota a arquitetura de camadas (Controller-Service-Route) para separar
   ├── /services       # A lógica pesada: algoritmo de fechamento, cálculos de repasse
   ├── /schemas        # Tipagem (ex: Zod) para validar o JSON de entrada
   ├── /middlewares    # Filtros de segurança (ex: verificação do token JWT)
+  ├── /utils          # Funções utilitárias (ex: validação de CPF)
   ├── app.ts          # Configuração do Fastify e registro de plugins
   └── server.ts       # Ponto de entrada (entrypoint) para rodar a aplicação
 ```
@@ -50,6 +51,7 @@ CREATE TABLE users (
     password_hash TEXT NOT NULL,
     avatar_url TEXT,
     pix_key TEXT,
+    pix_key_type TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -114,12 +116,12 @@ A API fornece comunicação via formato JSON. As rotas são protegidas via JWT.
 
 ### Autenticação e Usuários
 
-| Método   | Endpoint         | Ação                                  |
-| -------- | ---------------- | ------------------------------------- |
-| **POST** | `/auth/register` | Cria uma nova conta                   |
-| **POST** | `/auth/login`    | Autentica o usuário e devolve o token |
-| **GET**  | `/users/me`      | Retorna o perfil logado               |
-| **PUT**  | `/users/me/pix`  | Atualiza a chave PIX                  |
+| Método     | Endpoint         | Ação                                  |
+| ---------- | ---------------- | ------------------------------------- |
+| **POST**   | `/auth/register` | Cria uma nova conta                   |
+| **POST**   | `/auth/login`    | Autentica o usuário e devolve o token |
+| **GET**    | `/users/me`      | Retorna o perfil logado               |
+| **PATCH**  | `/users/me/pix`  | Atualiza a chave PIX                  |
 
 ### Casas e Membros (Households)
 

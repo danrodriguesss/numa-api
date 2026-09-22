@@ -172,12 +172,12 @@ export const updatePixController = async (
         });
     } catch (error: any) {
         if (error.name === "ZodError") {
-            reply.status(422).send({
+            return reply.status(422).send({
                 success: false,
                 error: {
                     code: "VALIDATION_ERROR",
                     message: "Formato de chave PIX inválido.",
-                    details: error.errors,
+                    details: error.issues,
                 },
             });
         }

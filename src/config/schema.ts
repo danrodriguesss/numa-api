@@ -9,6 +9,7 @@ export const users = sqliteTable("users", {
     passwordHash: text("password_hash").notNull(),
     avatarUrl: text("avatar_url"),
     pixKey: text("pix_key"),
+    pixKeyType: text("pix_key_type"),
     createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 

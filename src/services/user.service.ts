@@ -30,6 +30,7 @@ export const createUserService = async (data: RegisterUserInput) => {
             email: data.email,
             passwordHash: passwordHash,
             pixKey: data.pixKey,
+            pixKeyType: data.pixKeyType,
         })
         .returning({
             id: users.id,
@@ -75,6 +76,7 @@ export const getUserProfileService = async (userId: string) => {
             name: users.name,
             email: users.email,
             pixKey: users.pixKey,
+            pixKeyType: users.pixKeyType,
             avatarUrl: users.avatarUrl,
             createdAt: users.createdAt,
         })
@@ -94,11 +96,12 @@ export const updatePixKeyService = async (
     // Atualiza a linha onde o ID é igual ao ID do usuário logado e retorna o novo valor
     const [updatedUser] = await db
         .update(users)
-        .set({ pixKey: data.pixKey })
+        .set({ pixKey: data.pixKey, pixKeyType: data.pixKeyType })
         .where(eq(users.id, userId))
         .returning({
             id: users.id,
             pixKey: users.pixKey,
+            pixKeyType: users.pixKeyType,
         });
 
     if (!updatedUser) throw new Error("USER_NOT_FOUND");
