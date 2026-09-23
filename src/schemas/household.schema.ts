@@ -1,0 +1,11 @@
+import { z } from "zod";
+
+export const createHouseholdSchema = z.object({
+    name: z.string().min(5, "O nome da casa deve ter no mínimo 5 caracteres."),
+    closingDay: z
+        .number()
+        .min(1)
+        .max(31, "O dia de fechamento deve ser entre 1 e 31."),
+});
+
+export type CreateHouseholdInput = z.infer<typeof createHouseholdSchema>;

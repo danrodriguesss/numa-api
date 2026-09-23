@@ -129,6 +129,7 @@ A API fornece comunicação via formato JSON. As rotas são protegidas via JWT.
 | -------- | ------------------------- | --------------------------------------------- |
 | **POST** | `/households`             | Cria uma nova casa e gera o código de convite |
 | **POST** | `/households/join`        | Ingressa em uma casa com código de convite    |
+| **GET**  | `/households`             | Lista todas as casas que um usuário faz parte |
 | **GET**  | `/households/:id/members` | Lista os moradores de uma casa                |
 
 ### Gestão de Gastos (Expenses)
