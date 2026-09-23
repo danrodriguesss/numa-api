@@ -1,6 +1,6 @@
 import { eq, and } from "drizzle-orm";
 import { db } from "../config/database.js";
-import { households, householdMembers } from "../config/schema.js";
+import { households, householdMembers, users } from "../config/schema.js";
 import type { CreateHouseholdInput } from "../schemas/household.schema.js";
 
 // Helper para gerar um código de convite curto (ex: NUMA-X8B9)
@@ -99,4 +99,57 @@ export const joinHouseholdService = async (
 
     // Retorna os dados da casa, para mostrar onde o usuário acabou de entrar.
     return household;
+};
+
+export const getHouseholdDetailsService = async (
+    householdId: string,
+    userId: string,
+) => {
+    // Busca os dados da casa
+    const [household] = await db
+        .select({
+            id: households.id,
+            name: households.name,
+            inviteCode: households.inviteCode,
+            closingDay: households.closingDay,
+            createdAt: households.createdAt,
+        })
+        .from(households)
+        .where(eq(households.id, householdId));
+
+    if (!household) throw new Error("HOUSEHOLD_NOT_FOUND");
+
+    // Checa se o usuário logado é membro desta casa
+    const [membership] = await db
+        .select()
+        .from(householdMembers)
+        .where(
+            and(
+                eq(householdMembers.householdId, householdId),
+                eq(householdMembers.userId, userId),
+            ),
+        );
+
+    if (!membership) throw new Error("FORBIDDEN");
+
+    // Buscar todos os membros da casa com seus dados públicos (Nome, Avatar e PIX)
+    const members = await db
+        .select({
+            id: users.id,
+            name: users.name,
+            email: users.email,
+            avatarUrl: users.avatarUrl,
+            pixKey: users.pixKey,
+            pixKeyType: users.pixKeyType,
+            role: householdMembers.role,
+            joinedAt: householdMembers.joinedAt,
+        })
+        .from(householdMembers)
+        .innerJoin(users, eq(householdMembers.userId, users.id))
+        .where(eq(householdMembers.householdId, householdId));
+
+    return {
+        ...household,
+        members,
+    };
 };

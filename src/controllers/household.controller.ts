@@ -2,11 +2,13 @@ import type { FastifyRequest, FastifyReply } from "fastify";
 import {
     createHouseholdSchema,
     joinHouseholdSchema,
+    householdParamsSchema,
 } from "../schemas/household.schema.js";
 import {
     createHouseholdService,
     listUserHouseholdsService,
     joinHouseholdService,
+    getHouseholdDetailsService,
 } from "../services/household.service.js";
 
 export const createHouseholdController = async (
@@ -114,6 +116,64 @@ export const joinHouseholdController = async (
                 error: {
                     code: "ALREADY_A_MEMBER",
                     message: "Você já faz parte dessa casa.",
+                },
+            });
+        }
+
+        return reply.status(500).send({
+            success: false,
+            error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Ocorreu um erro inesperado no servidor.",
+            },
+        });
+    }
+};
+
+export const getHouseholdDetailsController = async (
+    req: FastifyRequest,
+    reply: FastifyReply,
+) => {
+    try {
+        // Valida o parâmetro que vem na URL (/households/:id)
+        const { id } = householdParamsSchema.parse(req.params);
+        const userId = req.user.sub;
+
+        const householdDetails = await getHouseholdDetailsService(id, userId);
+
+        return reply.status(200).send({
+            success: true,
+            data: householdDetails,
+        });
+    } catch (error: any) {
+        if (error.name === "ZodError") {
+            return reply.status(422).send({
+                success: false,
+                error: {
+                    code: "VALIDATION_ERROR",
+                    message: "Parâmetro de URL inválido.",
+                    details: error.issues,
+                },
+            });
+        }
+
+        if (error.message === "FORBIDDEN") {
+            return reply.status(403).send({
+                success: false,
+                error: {
+                    code: "FORBIDDEN",
+                    message:
+                        "Você não tem permissão para visualizar os detalhes dessa casa.",
+                },
+            });
+        }
+
+        if (error.message === "HOUSEHOLD_NOT_FOUND") {
+            return reply.status(404).send({
+                success: false,
+                error: {
+                    code: "HOUSEHOLD_NOT_FOUND",
+                    message: "Casa não encontrada.",
                 },
             });
         }

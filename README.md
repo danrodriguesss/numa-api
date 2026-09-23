@@ -125,12 +125,12 @@ A API fornece comunicação via formato JSON. As rotas são protegidas via JWT.
 
 ### Casas e Membros (Households)
 
-| Método   | Endpoint                  | Ação                                          |
-| -------- | ------------------------- | --------------------------------------------- |
-| **POST** | `/households`             | Cria uma nova casa e gera o código de convite |
-| **POST** | `/households/join`        | Ingressa em uma casa com código de convite    |
-| **GET**  | `/households`             | Lista todas as casas que um usuário faz parte |
-| **GET**  | `/households/:id/members` | Lista os moradores de uma casa                |
+| Método   | Endpoint                  | Ação                                                  |
+| -------- | ------------------------- | ----------------------------------------------------- |
+| **POST** | `/households`             | Cria uma nova casa e gera o código de convite         |
+| **POST** | `/households/join`        | Ingressa em uma casa com código de convite            |
+| **GET**  | `/households`             | Lista todas as casas que um usuário faz parte         |
+| **GET**  | `/households/:id`         | Lista os detalhes e os membros de uma casa específica |
 
 ### Gestão de Gastos (Expenses)
 

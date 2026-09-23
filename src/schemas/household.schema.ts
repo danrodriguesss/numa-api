@@ -13,3 +13,7 @@ export type CreateHouseholdInput = z.infer<typeof createHouseholdSchema>;
 export const joinHouseholdSchema = z.object({
     inviteCode: z.string().min(1, "O código de convite é obrigatório."),
 });
+
+export const householdParamsSchema = z.object({
+    id: z.uuid("ID da casa inválido (deve ser um UUID)"),
+});
