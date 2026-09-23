@@ -9,3 +9,7 @@ export const createHouseholdSchema = z.object({
 });
 
 export type CreateHouseholdInput = z.infer<typeof createHouseholdSchema>;
+
+export const joinHouseholdSchema = z.object({
+    inviteCode: z.string().min(1, "O código de convite é obrigatório."),
+});

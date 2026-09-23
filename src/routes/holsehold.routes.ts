@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import {
     createHouseholdController,
     listUserHouseholdsController,
+    joinHouseholdController,
 } from "../controllers/household.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
@@ -17,5 +18,11 @@ export const householdRoutes = (app: FastifyInstance) => {
         "/households",
         { onRequest: [verifyJWT] },
         listUserHouseholdsController,
+    );
+
+    app.post(
+        "/households/join",
+        { onRequest: [verifyJWT] },
+        joinHouseholdController,
     );
 };

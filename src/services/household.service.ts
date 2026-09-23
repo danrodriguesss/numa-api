@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db } from "../config/database.js";
 import { households, householdMembers } from "../config/schema.js";
 import type { CreateHouseholdInput } from "../schemas/household.schema.js";
@@ -62,4 +62,41 @@ export const listUserHouseholdsService = async (userId: string) => {
         .where(eq(householdMembers.userId, userId));
 
     return userHouseholds;
+};
+
+export const joinHouseholdService = async (
+    userId: string,
+    inviteCode: string,
+) => {
+    // Busca a casa pelo código de convite
+    const [household] = await db
+        .select()
+        .from(households)
+        .where(eq(households.inviteCode, inviteCode));
+
+    if (!household) throw new Error("INVALID_INVITE_CODE");
+
+    // Verifica se o usuário já é membro dessa casa
+    const [existingMember] = await db
+        .select()
+        .from(householdMembers)
+        .where(
+            and(
+                eq(householdMembers.householdId, household.id),
+                eq(householdMembers.userId, userId),
+            ),
+        );
+
+    if (existingMember) throw new Error("ALREADY_A_MEMBER");
+
+    // Insere o usuário na casa como "member" (membro comum, não admin)
+    await db.insert(householdMembers).values({
+        id: crypto.randomUUID(),
+        householdId: household.id,
+        userId: userId,
+        role: "member",
+    });
+
+    // Retorna os dados da casa, para mostrar onde o usuário acabou de entrar.
+    return household;
 };
