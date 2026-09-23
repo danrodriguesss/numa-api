@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { db } from "../config/database.js";
 import { households, householdMembers } from "../config/schema.js";
 import type { CreateHouseholdInput } from "../schemas/household.schema.js";
@@ -40,4 +41,25 @@ export const createHouseholdService = async (
         inviteCode,
         closingDay: data.closingDay,
     };
+};
+
+export const listUserHouseholdsService = async (userId: string) => {
+    // Faz un JOIN obtendo a casa, mas apenas onde o usuário logado é membro
+    const userHouseholds = await db
+        .select({
+            id: households.id,
+            name: households.name,
+            inviteCode: households.inviteCode,
+            closingDay: households.closingDay,
+            role: householdMembers.role,
+            joinedAt: householdMembers.joinedAt,
+        })
+        .from(households)
+        .innerJoin(
+            householdMembers,
+            eq(households.id, householdMembers.householdId),
+        )
+        .where(eq(householdMembers.userId, userId));
+
+    return userHouseholds;
 };

@@ -1,5 +1,8 @@
 import type { FastifyInstance } from "fastify";
-import { createHouseholdController } from "../controllers/household.controller.js";
+import {
+    createHouseholdController,
+    listUserHouseholdsController,
+} from "../controllers/household.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 export const householdRoutes = (app: FastifyInstance) => {
@@ -8,5 +11,11 @@ export const householdRoutes = (app: FastifyInstance) => {
         "/households",
         { onRequest: [verifyJWT] },
         createHouseholdController,
+    );
+
+    app.get(
+        "/households",
+        { onRequest: [verifyJWT] },
+        listUserHouseholdsController,
     );
 };

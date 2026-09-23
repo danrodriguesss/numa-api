@@ -1,6 +1,9 @@
 import type { FastifyRequest, FastifyReply } from "fastify";
 import { createHouseholdSchema } from "../schemas/household.schema.js";
-import { createHouseholdService } from "../services/household.service.js";
+import {
+    createHouseholdService,
+    listUserHouseholdsService,
+} from "../services/household.service.js";
 
 export const createHouseholdController = async (
     req: FastifyRequest,
@@ -30,6 +33,30 @@ export const createHouseholdController = async (
             });
         }
 
+        return reply.status(500).send({
+            success: false,
+            error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Ocorreu um erro inesperado no servidor.",
+            },
+        });
+    }
+};
+
+export const listUserHouseholdsController = async (
+    req: FastifyRequest,
+    reply: FastifyReply,
+) => {
+    try {
+        const userId = req.user.sub;
+
+        const householdsList = await listUserHouseholdsService(userId);
+
+        return reply.status(200).send({
+            success: true,
+            data: householdsList,
+        });
+    } catch (error: any) {
         return reply.status(500).send({
             success: false,
             error: {
