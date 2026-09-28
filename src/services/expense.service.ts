@@ -5,8 +5,11 @@ import {
     households,
     householdMembers,
 } from "../config/schema.js";
-import { eq, and } from "drizzle-orm";
-import type { CreateExpenseInput } from "../schemas/expense.schema.js";
+import { eq, and, like, inArray, desc } from "drizzle-orm";
+import type {
+    CreateExpenseInput,
+    GetExpensesQueryInput,
+} from "../schemas/expense.schema.js";
 
 export const createExpenseService = async (
     userId: string,
@@ -80,6 +83,74 @@ export const createExpenseService = async (
             ...newExpense,
             totalAmount,
             items: insertedItems,
+        };
+    });
+};
+
+export const getExpensesService = async (
+    authUserId: string,
+    filters: GetExpensesQueryInput,
+) => {
+    // Verifica se o usuário autenticado pertence à casa informada
+    const [membership] = await db
+        .select()
+        .from(householdMembers)
+        .where(
+            and(
+                eq(householdMembers.householdId, filters.householdId),
+                eq(householdMembers.userId, authUserId),
+            ),
+        );
+
+    if (!membership) throw new Error("FORBIDDEN");
+
+    // Monta as condições dinâmicas de busca
+    const conditions = [eq(expenses.householdId, filters.householdId)];
+
+    if (filters.userId) conditions.push(eq(expenses.paidBy, filters.userId));
+
+    // Busca todas as datas que começam com "YYYY-MM"
+    if (filters.month)
+        conditions.push(like(expenses.expenseDate, `${filters.month}%`));
+
+    // Busca as capas das despesas
+    const expenseList = await db
+        .select({
+            id: expenses.id,
+            householdId: expenses.householdId,
+            paidBy: expenses.paidBy,
+            title: expenses.title,
+            category: expenses.category,
+            expenseDate: expenses.expenseDate,
+            createdAt: expenses.createdAt,
+        })
+        .from(expenses)
+        .where(and(...conditions))
+        .orderBy(desc(expenses.expenseDate));
+
+    if (expenseList.length === 0) return [];
+
+    // Buscar os itens das despesas encontradas
+    const expenseIds = expenseList.map((e) => e.id);
+    const items = await db
+        .select()
+        .from(expenseItems)
+        .where(inArray(expenseItems.expenseId, expenseIds));
+
+    // Agrupa os itens em suas respectivas despesas e calcula o total
+    return expenseList.map((expense) => {
+        const currentItems = items.filter(
+            (item) => item.expenseId === expense.id,
+        );
+        const totalAmount = currentItems.reduce(
+            (acc, item) => acc + item.unitPrice * item.quantity,
+            0,
+        );
+
+        return {
+            ...expense,
+            totalAmount,
+            items: currentItems,
         };
     });
 };

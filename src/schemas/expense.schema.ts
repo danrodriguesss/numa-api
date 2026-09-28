@@ -20,3 +20,21 @@ export const createExpenseSchema = z.object({
 });
 
 export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;
+
+export const getExpensesQuerySchema = z.object({
+    householdId: z.uuid("O ID da casa é obrigatório e deve ser um UUID."),
+    userId: z
+        .uuid("ID do usuário deve ser um UUID.")
+        .optional()
+        .or(z.literal("")),
+    month: z
+        .string()
+        .regex(
+            /^\d{4}-\d{2}$/,
+            "O mês deve estar no formato YYYY-MM (ex: 2026-09).",
+        )
+        .optional()
+        .or(z.literal("")),
+});
+
+export type GetExpensesQueryInput = z.infer<typeof getExpensesQuerySchema>;
