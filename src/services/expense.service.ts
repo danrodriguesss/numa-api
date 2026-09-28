@@ -12,6 +12,14 @@ export const createExpenseService = async (
     userId: string,
     data: CreateExpenseInput,
 ) => {
+    // Verifica se já existe uma despesa com esse ID
+    const [existingExpense] = await db
+        .select()
+        .from(expenses)
+        .where(eq(expenses.id, data.id));
+
+    if (existingExpense) throw new Error("EXPENSE_ALREADY_EXISTS");
+
     // Verifica se a casa existe
     const [household] = await db
         .select()
