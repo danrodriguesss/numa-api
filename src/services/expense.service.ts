@@ -9,6 +9,7 @@ import { eq, and, like, inArray, desc } from "drizzle-orm";
 import type {
     CreateExpenseInput,
     GetExpensesQueryInput,
+    UpdateExpenseInput,
 } from "../schemas/expense.schema.js";
 
 export const createExpenseService = async (
@@ -151,6 +152,81 @@ export const getExpensesService = async (
             ...expense,
             totalAmount,
             items: currentItems,
+        };
+    });
+};
+
+export const updateExpenseService = async (
+    expenseId: string,
+    userId: string,
+    data: UpdateExpenseInput,
+) => {
+    // Verifica se a despesa existe no banco
+    const [existingExpense] = await db
+        .select()
+        .from(expenses)
+        .where(eq(expenses.id, expenseId));
+
+    if (!existingExpense) throw new Error("EXPENSE_NOT_FOUND");
+
+    // Verifica se o usuário tem permissão (é membro da casa à qual a despesa já pertence).
+    // Usa existingExpense.householdId por segurança, para evitar que o usuário tente "roubar"
+    // a despesa mudando o householdId
+    const [membership] = await db
+        .select()
+        .from(householdMembers)
+        .where(
+            and(
+                eq(householdMembers.householdId, existingExpense.householdId),
+                eq(householdMembers.userId, userId),
+            ),
+        );
+
+    if (!membership) throw new Error("FORBIDDEN");
+
+    // Transação atômica: Atualiza capa, limpa itens antigos e insere os novos
+    return await db.transaction(async (tx) => {
+        // Atualiza a capa da despesa
+        const [updatedExpense] = await tx
+            .update(expenses)
+            .set({
+                paidBy: data.paid_by,
+                title: data.title,
+                category: data.category,
+                expenseDate: data.expense_date,
+            })
+            .where(eq(expenses.id, expenseId))
+            .returning();
+
+        // Deleta TODOS os itens antigos atrelados a esta despesa
+        await tx
+            .delete(expenseItems)
+            .where(eq(expenseItems.expenseId, expenseId));
+
+        // Insere a nova lista de itens enviada pelo front-end
+        const itemsToInsert = data.items.map((item) => ({
+            id: item.id,
+            expenseId: expenseId, // Vincula ao ID da URL
+            name: item.name,
+            unitPrice: item.unit_price,
+            quantity: item.quantity,
+        }));
+
+        const insertedItems = await tx
+            .insert(expenseItems)
+            .values(itemsToInsert)
+            .returning();
+
+        // Recalcula o total
+        const totalAmount = insertedItems.reduce(
+            (acc, item) => acc + item.unitPrice * item.quantity,
+            0,
+        );
+
+        return {
+            ...updatedExpense,
+            totalAmount,
+            items: insertedItems,
         };
     });
 };

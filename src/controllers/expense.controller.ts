@@ -1,11 +1,14 @@
 import type { FastifyRequest, FastifyReply } from "fastify";
 import {
     createExpenseSchema,
+    expenseIdParamSchema,
     getExpensesQuerySchema,
+    updateExpenseSchema,
 } from "../schemas/expense.schema.js";
 import {
     createExpenseService,
     getExpensesService,
+    updateExpenseService,
 } from "../services/expense.service.js";
 
 export const createExpenseController = async (
@@ -110,6 +113,65 @@ export const getExpensesController = async (
                     code: "FORBIDDEN",
                     message:
                         "Você não tem permissão para visualizar as despesas dessa casa.",
+                },
+            });
+        }
+
+        return reply.status(500).send({
+            success: false,
+            error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Ocorreu um erro inesperado no servidor.",
+            },
+        });
+    }
+};
+
+export const updateExpenseController = async (
+    req: FastifyRequest,
+    reply: FastifyReply,
+) => {
+    try {
+        const { id } = expenseIdParamSchema.parse(req.params);
+        const data = updateExpenseSchema.parse(req.body);
+        const authUserId = req.user.sub;
+
+        const updatedExpense = await updateExpenseService(id, authUserId, data);
+
+        return reply.status(200).send({
+            success: true,
+            message: "Despesa atualizada com sucesso!",
+            data: updatedExpense,
+        });
+    } catch (error: any) {
+        if (error.name === "ZodError") {
+            return reply.status(422).send({
+                success: false,
+                error: {
+                    code: "VALIDATION_ERROR",
+                    message: "Dados inválidos na requisição.",
+                    details: error.issues,
+                },
+            });
+        }
+
+        if (error.message === "EXPENSE_NOT_FOUND") {
+            return reply.status(404).send({
+                success: false,
+                error: {
+                    code: "EXPENSE_NOT_FOUND",
+                    message: "Despesa não encontrada.",
+                },
+            });
+        }
+
+        if (error.message === "FORBIDDEN") {
+            return reply.status(403).send({
+                success: false,
+                error: {
+                    code: "FORBIDDEN",
+                    message:
+                        "Você não tem permissão para alterar esta despesa.",
                 },
             });
         }
