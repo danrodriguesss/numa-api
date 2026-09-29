@@ -3,6 +3,7 @@ import fastifyJwt from "@fastify/jwt";
 import { userRoutes } from "./routes/user.routes.js";
 import { householdRoutes } from "./routes/holsehold.routes.js";
 import { expenseRoutes } from "./routes/expense.routes.js";
+import { settlementRoutes } from "./routes/settlement.routes.js";
 import "dotenv/config";
 
 export const app = fastify({
@@ -21,6 +22,9 @@ app.register(householdRoutes);
 
 // Registrando o grupo de rotas de despesas (expenses)
 app.register(expenseRoutes);
+
+// Registrando o gripo de rotas de acerto de contas (settlements)
+app.register(settlementRoutes);
 
 app.get("/health", async (_, reply) => {
     return reply.status(200).send({
