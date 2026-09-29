@@ -78,6 +78,7 @@ export const settlements = sqliteTable("settlements", {
         .notNull()
         .references(() => users.id),
     amount: real("amount").notNull(),
-    referenceMonth: text("status").default("pendente"),
+    referenceMonth: text("reference_month").notNull(), // ex: "2026-09"
+    status: text("status").default("pendente"), // "pendente" ou "confirmado"
     createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });

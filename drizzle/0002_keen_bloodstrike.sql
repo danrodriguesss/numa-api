@@ -1,0 +1,1 @@
+ALTER TABLE `settlements` ADD `reference_month` text NOT NULL;
