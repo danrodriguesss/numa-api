@@ -3,6 +3,7 @@ import {
     createExpenseController,
     getExpensesController,
     updateExpenseController,
+    deleteExpenseController,
 } from "../controllers/expense.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
@@ -13,5 +14,10 @@ export const expenseRoutes = async (app: FastifyInstance) => {
         "/expenses/:id",
         { onRequest: [verifyJWT] },
         updateExpenseController,
+    );
+    app.delete(
+        "/expenses/:id",
+        { onRequest: [verifyJWT] },
+        deleteExpenseController,
     );
 };

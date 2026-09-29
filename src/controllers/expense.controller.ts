@@ -9,6 +9,7 @@ import {
     createExpenseService,
     getExpensesService,
     updateExpenseService,
+    deleteExpenseService,
 } from "../services/expense.service.js";
 
 export const createExpenseController = async (
@@ -172,6 +173,86 @@ export const updateExpenseController = async (
                     code: "FORBIDDEN",
                     message:
                         "Você não tem permissão para alterar esta despesa.",
+                },
+            });
+        }
+
+        if (error.message === "UNAUTHORIZED_ACTION") {
+            return reply.status(401).send({
+                success: false,
+                error: {
+                    code: "UNAUTHORIZED_ACTION",
+                    message:
+                        "Apenas o criador da despesa ou um administrador da casa podem realizar essa ação.",
+                },
+            });
+        }
+
+        return reply.status(500).send({
+            success: false,
+            error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Ocorreu um erro inesperado no servidor.",
+            },
+        });
+    }
+};
+
+export const deleteExpenseController = async (
+    req: FastifyRequest,
+    reply: FastifyReply,
+) => {
+    try {
+        // Reaproveitando o schema criado para a rota PUT
+        const { id } = expenseIdParamSchema.parse(req.params);
+        const authUserId = req.user.sub;
+
+        await deleteExpenseService(id, authUserId);
+
+        return reply.status(200).send({
+            success: true,
+            message: "Despesa removida com sucesso!",
+        });
+    } catch (error: any) {
+        if (error.name === "ZodError") {
+            return reply.status(422).send({
+                success: false,
+                error: {
+                    code: "VALIDATION_ERROR",
+                    message: "Dados inválidos na requisição.",
+                    details: error.issues,
+                },
+            });
+        }
+
+        if (error.message === "EXPENSE_NOT_FOUND") {
+            return reply.status(404).send({
+                success: false,
+                error: {
+                    code: "EXPENSE_NOT_FOUND",
+                    message: "Despesa não encontrada.",
+                },
+            });
+        }
+
+        if (error.message === "FORBIDDEN") {
+            return reply.status(403).send({
+                success: false,
+                error: {
+                    code: "FORBIDDEN",
+                    message:
+                        "Você não tem permissão para remover esta despesa.",
+                },
+            });
+        }
+
+        if (error.message === "UNAUTHORIZED_ACTION") {
+            return reply.status(401).send({
+                success: false,
+                error: {
+                    code: "UNAUTHORIZED_ACTION",
+                    message:
+                        "Apenas o criador da despesa ou um administrador podem realizar essa ação.",
                 },
             });
         }

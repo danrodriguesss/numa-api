@@ -184,6 +184,13 @@ export const updateExpenseService = async (
 
     if (!membership) throw new Error("FORBIDDEN");
 
+    // Só é permitido deletar uma despesa se o usuário for o criador dela OU se
+    // for um administrador da casa
+    const isOwner = existingExpense.paidBy === userId;
+    const isAdmin = membership.role === "admin";
+
+    if (!isOwner && !isAdmin) throw new Error("UNAUTHORIZED_ACTION");
+
     // Transação atômica: Atualiza capa, limpa itens antigos e insere os novos
     return await db.transaction(async (tx) => {
         // Atualiza a capa da despesa
@@ -229,4 +236,41 @@ export const updateExpenseService = async (
             items: insertedItems,
         };
     });
+};
+
+export const deleteExpenseService = async (
+    expenseId: string,
+    userId: string,
+) => {
+    // Verifica se a despesa existe
+    const [existingExpense] = await db
+        .select()
+        .from(expenses)
+        .where(eq(expenses.id, expenseId));
+
+    if (!existingExpense) throw new Error("EXPENSE_NOT_FOUND");
+
+    // Verifica se o usuário pertence à casa dona da despesa
+    const [membership] = await db
+        .select()
+        .from(householdMembers)
+        .where(
+            and(
+                eq(householdMembers.householdId, existingExpense.householdId),
+                eq(householdMembers.userId, userId),
+            ),
+        );
+
+    if (!membership) throw new Error("FORBIDDEN");
+
+    // Só é permitido deletar uma despesa se o usuário for o criador dela OU se
+    // for um administrador da casa
+    const isOwner = existingExpense.paidBy === userId;
+    const isAdmin = membership.role === "admin";
+
+    if (!isOwner && !isAdmin) throw new Error("UNAUTHORIZED_ACTION");
+
+    // Deleta a despesa. Os itens (expense_items) serão deletados automaticamente
+    // pelo banco através do "ON DELETE CASCADE"
+    await db.delete(expenses).where(eq(expenses.id, expenseId));
 };
