@@ -1,10 +1,13 @@
 import { db } from "../config/database.js";
-import { eq, and, like, inArray } from "drizzle-orm";
+import { eq, and, like, inArray, desc } from "drizzle-orm";
+import { alias } from "drizzle-orm/sqlite-core";
 import {
     expenses,
     expenseItems,
     householdMembers,
     settlements,
+    users,
+    households,
 } from "../config/schema.js";
 
 export interface SettlementResponse {
@@ -145,4 +148,70 @@ export const calculateSettlementsService = async (
         idealShare: Math.round(idealShare * 100) / 100,
         transactions: newSettlements,
     };
+};
+
+export const getSettlementsService = async (
+    householdId: string,
+    userId: string,
+    month?: string,
+) => {
+    // Verifica se a casa existe
+    const [household] = await db
+        .select()
+        .from(households)
+        .where(eq(households.id, householdId));
+
+    if (!household) throw new Error("HOUSEHOLD_NOT_FOUND");
+
+    // Verifica permissão de acesso à casa
+    const [membership] = await db
+        .select()
+        .from(householdMembers)
+        .where(
+            and(
+                eq(householdMembers.householdId, householdId),
+                eq(householdMembers.userId, userId),
+            ),
+        );
+
+    if (!membership) throw new Error("FORBIDDEN");
+
+    // Prepara os aliases para a tabela de usuários
+    const payerAlias = alias(users, "payer");
+    const recevierAlias = alias(users, "receiver");
+
+    // Monta filtros dinâmicos
+    const conditions = [eq(settlements.householdId, householdId)];
+    if (month) {
+        conditions.push(eq(settlements.referenceMonth, month));
+    }
+
+    // Busca os acertos já trazendo os dados do pagador e recebedor
+    const results = await db
+        .select({
+            id: settlements.id,
+            amount: settlements.amount,
+            referenceMonth: settlements.referenceMonth,
+            status: settlements.status,
+            createdAt: settlements.createdAt,
+            payer: {
+                id: payerAlias.id,
+                name: payerAlias.name,
+                avatarUrl: payerAlias.avatarUrl,
+            },
+            receiver: {
+                id: recevierAlias.id,
+                name: recevierAlias.name,
+                avatarUrl: recevierAlias.avatarUrl,
+                pixKey: recevierAlias.pixKey,
+                pixKeyType: recevierAlias.pixKeyType,
+            },
+        })
+        .from(settlements)
+        .innerJoin(payerAlias, eq(settlements.payerId, payerAlias.id))
+        .innerJoin(recevierAlias, eq(settlements.receiverId, recevierAlias.id))
+        .where(and(...conditions))
+        .orderBy(desc(settlements.createdAt));
+
+    return results;
 };

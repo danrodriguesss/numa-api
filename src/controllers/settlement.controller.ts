@@ -2,8 +2,12 @@ import type { FastifyRequest, FastifyReply } from "fastify";
 import {
     settleMonthParamsSchema,
     settleMonthBodySchema,
+    getSettlementsQuerySchema,
 } from "../schemas/settlement.schema.js";
-import { calculateSettlementsService } from "../services/settlement.service.js";
+import {
+    calculateSettlementsService,
+    getSettlementsService,
+} from "../services/settlement.service.js";
 
 export const settleMonthController = async (
     req: FastifyRequest,
@@ -74,6 +78,64 @@ export const settleMonthController = async (
                 error: {
                     code: "NO_MEMBERS",
                     message: "Não há membros registrados para esta casa.",
+                },
+            });
+        }
+
+        return reply.status(500).send({
+            success: false,
+            error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Ocorreu um erro inesperado no servidor.",
+            },
+        });
+    }
+};
+
+export const getSettlementsController = async (
+    req: FastifyRequest,
+    reply: FastifyReply,
+) => {
+    try {
+        const { id } = settleMonthParamsSchema.parse(req.params);
+        const { month } = getSettlementsQuerySchema.parse(req.query);
+        const authUserId = req.user.sub;
+
+        const results = await getSettlementsService(id, authUserId, month);
+
+        return reply.status(200).send({
+            success: true,
+            data: results,
+        });
+    } catch (error: any) {
+        if (error.name === "ZodError") {
+            return reply.status(422).send({
+                success: false,
+                error: {
+                    code: "VALIDATION_ERROR",
+                    message: "Dados inválidos na requisição.",
+                    details: error.issues,
+                },
+            });
+        }
+
+        if (error.message === "HOUSEHOLD_NOT_FOUND") {
+            return reply.status(404).send({
+                success: false,
+                error: {
+                    code: "HOUSEHOLD_NOT_FOUND",
+                    message: "Casa não encontrada.",
+                },
+            });
+        }
+
+        if (error.message === "FORBIDDEN") {
+            return reply.status(403).send({
+                success: false,
+                error: {
+                    code: "FORBIDDEN",
+                    message:
+                        "Você não tem permissão para ver os acertos desta casa.",
                 },
             });
         }
