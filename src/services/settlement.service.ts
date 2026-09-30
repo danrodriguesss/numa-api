@@ -28,6 +28,14 @@ export const calculateSettlementsService = async (
     householdId: string,
     month: string,
 ): Promise<SettlementResponse> => {
+    // Verifica se a casa existe
+    const [household] = await db
+        .select()
+        .from(households)
+        .where(eq(households.id, householdId));
+
+    if (!household) throw new Error("HOUSEHOLD_NOT_FOUND");
+
     // Verifica se o mês já foi fechado (evita duplicidade)
     const existingSettlements = await db
         .select()

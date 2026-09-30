@@ -51,6 +51,16 @@ export const settleMonthController = async (
             });
         }
 
+        if (error.message === "HOUSEHOLD_NOT_FOUND") {
+            return reply.status(404).send({
+                success: false,
+                error: {
+                    code: "HOUSEHOLD_NOT_FOUND",
+                    message: "Casa não encontrada.",
+                },
+            });
+        }
+
         if (error.message === "MONTH_ALREADY_SETTLED") {
             return reply.status(400).send({
                 success: false,
