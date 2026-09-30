@@ -7,24 +7,24 @@ import {
     settlements,
 } from "../config/schema.js";
 
+export interface SettlementResponse {
+    totalMonth: number;
+    idealShare: number;
+    transactions: {
+        id: string;
+        householdId: string;
+        payerId: string;
+        receiverId: string;
+        amount: number;
+        referenceMonth: string;
+        status: string | null;
+    }[];
+}
+
 export const calculateSettlementsService = async (
     householdId: string,
-    userId: string,
     month: string,
-) => {
-    // Verifica se o usuário é membro da casa
-    const [membership] = await db
-        .select()
-        .from(householdMembers)
-        .where(
-            and(
-                eq(householdMembers.householdId, householdId),
-                eq(householdMembers.userId, userId),
-            ),
-        );
-
-    if (!membership) throw new Error("FORBIDDEN");
-
+): Promise<SettlementResponse> => {
     // Verifica se o mês já foi fechado (evita duplicidade)
     const existingSettlements = await db
         .select()

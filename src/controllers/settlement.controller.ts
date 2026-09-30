@@ -10,11 +10,25 @@ export const settleMonthController = async (
     reply: FastifyReply,
 ) => {
     try {
+        // Validação de segurança do sistema (CRON)
+        const authHeader = req.headers.authorization;
+        const cronSecret = process.env.CRON_SECRET;
+
+        // A vercel envia o segredo no formato "Bearer <SECRET>"
+        if (!authHeader || authHeader !== `Bearer ${cronSecret}`) {
+            return reply.status(401).send({
+                success: false,
+                error: {
+                    code: "UNAUTHORIZED",
+                    message: "Chamada de sistema não autorizada.",
+                },
+            });
+        }
+
         const { id } = settleMonthParamsSchema.parse(req.params);
         const { month } = settleMonthBodySchema.parse(req.body);
-        const authUserId = req.user.sub;
 
-        const result = await calculateSettlementsService(id, authUserId, month);
+        const result = await calculateSettlementsService(id, month);
 
         return reply.status(200).send({
             success: true,
@@ -29,16 +43,6 @@ export const settleMonthController = async (
                     code: "VALIDATION_ERROR",
                     message: "Dados inválidos na requisição.",
                     details: error.issues,
-                },
-            });
-        }
-
-        if (error.message === "FORBIDDEN") {
-            return reply.status(403).send({
-                success: false,
-                error: {
-                    code: "FORBIDDEN",
-                    message: "Você não tem permissão nesta casa.",
                 },
             });
         }
