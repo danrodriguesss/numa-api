@@ -116,21 +116,21 @@ A API fornece comunicação via formato JSON. As rotas são protegidas via JWT.
 
 ### Autenticação e Usuários
 
-| Método     | Endpoint         | Ação                                  |
-| ---------- | ---------------- | ------------------------------------- |
-| **POST**   | `/auth/register` | Cria uma nova conta                   |
-| **POST**   | `/auth/login`    | Autentica o usuário e devolve o token |
-| **GET**    | `/users/me`      | Retorna o perfil logado               |
-| **PATCH**  | `/users/me/pix`  | Atualiza a chave PIX                  |
+| Método    | Endpoint         | Ação                                  |
+| --------- | ---------------- | ------------------------------------- |
+| **POST**  | `/auth/register` | Cria uma nova conta                   |
+| **POST**  | `/auth/login`    | Autentica o usuário e devolve o token |
+| **GET**   | `/users/me`      | Retorna o perfil logado               |
+| **PATCH** | `/users/me/pix`  | Atualiza a chave PIX                  |
 
 ### Casas e Membros (Households)
 
-| Método   | Endpoint                  | Ação                                                  |
-| -------- | ------------------------- | ----------------------------------------------------- |
-| **POST** | `/households`             | Cria uma nova casa e gera o código de convite         |
-| **POST** | `/households/join`        | Ingressa em uma casa com código de convite            |
-| **GET**  | `/households`             | Lista todas as casas que um usuário faz parte         |
-| **GET**  | `/households/:id`         | Lista os detalhes e os membros de uma casa específica |
+| Método   | Endpoint           | Ação                                                  |
+| -------- | ------------------ | ----------------------------------------------------- |
+| **POST** | `/households`      | Cria uma nova casa e gera o código de convite         |
+| **POST** | `/households/join` | Ingressa em uma casa com código de convite            |
+| **GET**  | `/households`      | Lista todas as casas que um usuário faz parte         |
+| **GET**  | `/households/:id`  | Lista os detalhes e os membros de uma casa específica |
 
 ### Gestão de Gastos (Expenses)
 
@@ -146,26 +146,34 @@ O aplicativo mobile deve gerar os UUIDs (tanto da despesa quanto dos itens) loca
 
 ```json
 {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "household_id": "a1b2c3d4-e5f6-7890-1234-56789abcdef0",
-    "paid_by": "f8a9b0c1-d2e3-4f5a-6b7c-8d9e0f1a2b3c",
-    "title": "Mercado Assaí - Limpeza e Água",
-    "category": "Variável",
-    "expense_date": "2026-09-15",
-    "items": [
-        {
-            "id": "11111111-2222-3333-4444-555555555555",
-            "name": "Galão de água 20L",
-            "unit_price": 7.0,
-            "quantity": 4
-        },
-        {
-            "id": "66666666-7777-8888-9999-000000000000",
-            "name": "Detergente Neutro",
-            "unit_price": 2.6,
-            "quantity": 2
-        }
-    ]
+    {
+	"id": "81d45874-33be-4b97-a9bf-564a7eb893c1",
+	"household_id": "95563319-f1eb-42b7-8ad4-387f58445091",
+	"paid_by": "8a8aabc7-38b2-40ab-8c3e-053407cda422",
+	"title": "Mercadinho - Produtos de limpeza",
+	"category": "Variável",
+	"expense_date": "2026-10-23",
+	"items": [
+            {
+                "id": "518e0658-812c-407f-bcc2-c6ad83524193",
+                "name": "Cloro 1L",
+                "unit_price": 3.5,
+                "quantity": 1
+            },
+            {
+                "id": "70b684c5-dd63-4cc5-bae8-8bf963f41e1b",
+                "name": "Desinfetante",
+                "unit_price": 2.4,
+                "quantity": 1
+            },
+            {
+                "id": "9fdfb1a2-e0fe-4716-b8a7-2e482ba7f6b5",
+                "name": "Pedra sanitária",
+                "unit_price": 1.2,
+                "quantity": 3
+            }
+	    ]
+    }
 }
 ```
 
