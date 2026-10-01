@@ -223,3 +223,57 @@ export const getSettlementsService = async (
 
     return results;
 };
+
+export const markAsPaidService = async (
+    settlementId: string,
+    userId: string,
+) => {
+    const [settlement] = await db
+        .select()
+        .from(settlements)
+        .where(eq(settlements.id, settlementId));
+
+    if (!settlement) throw new Error("SETTLEMENT_NOT_FOUND");
+
+    // Apenas quem DEVE pode marcar como pago
+    if (settlement.payerId !== userId) throw new Error("FORBIDDEN_PAYER");
+
+    // Só pode pagar se estiver pendente
+    if (settlement.status !== "pendente")
+        throw new Error("INVALID_STATUS_TRANSITION");
+
+    const [updated] = await db
+        .update(settlements)
+        .set({ status: "pago" })
+        .where(eq(settlements.id, settlementId))
+        .returning();
+
+    return updated;
+};
+
+export const confirmPaymentService = async (
+    settlementId: string,
+    userId: string,
+) => {
+    const [settlement] = await db
+        .select()
+        .from(settlements)
+        .where(eq(settlements.id, settlementId));
+
+    if (!settlement) throw new Error("SETTLEMENT_NOT_FOUND");
+
+    // Apenas quem RECEBE pode confirmar
+    if (settlement.receiverId !== userId) throw new Error("FORBIDDEN_RECEIVER");
+
+    // Só pode confirmar se o outro já avisou que pagou
+    if (settlement.status !== "pago")
+        throw new Error("INVALID_STATUS_TRANSITION");
+
+    const [updated] = await db
+        .update(settlements)
+        .set({ status: "confirmado" })
+        .where(eq(settlements.id, settlementId))
+        .returning();
+
+    return updated;
+};

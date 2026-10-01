@@ -23,3 +23,9 @@ export const getSettlementsQuerySchema = z.object({
         .optional()
         .or(z.literal("")),
 });
+
+export const settlementIdParamSchema = z.object({
+    id: z.uuid("ID do acerto inválido."),
+});
+
+export type SettlementIdParamInput = z.infer<typeof settlementIdParamSchema>;

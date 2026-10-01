@@ -3,6 +3,8 @@ import { verifyJWT } from "../middlewares/auth.middleware.js";
 import {
     settleMonthController,
     getSettlementsController,
+    markAsPaidController,
+    confirmPaymentController,
 } from "../controllers/settlement.controller.js";
 
 export const settlementRoutes = async (app: FastifyInstance) => {
@@ -14,5 +16,17 @@ export const settlementRoutes = async (app: FastifyInstance) => {
         "/households/:id/settlements",
         { onRequest: [verifyJWT] },
         getSettlementsController,
+    );
+
+    // Rotas de dupla validação
+    app.patch(
+        "/settlements/:id/pay",
+        { onRequest: [verifyJWT] },
+        markAsPaidController,
+    );
+    app.patch(
+        "/settlements/:id/confirm",
+        { onRequest: [verifyJWT] },
+        confirmPaymentController,
     );
 };

@@ -3,10 +3,13 @@ import {
     settleMonthParamsSchema,
     settleMonthBodySchema,
     getSettlementsQuerySchema,
+    settlementIdParamSchema,
 } from "../schemas/settlement.schema.js";
 import {
     calculateSettlementsService,
     getSettlementsService,
+    markAsPaidService,
+    confirmPaymentService,
 } from "../services/settlement.service.js";
 
 export const settleMonthController = async (
@@ -158,4 +161,107 @@ export const getSettlementsController = async (
             },
         });
     }
+};
+
+export const markAsPaidController = async (
+    req: FastifyRequest,
+    reply: FastifyReply,
+) => {
+    try {
+        const { id } = settlementIdParamSchema.parse(req.params);
+        const authUserId = req.user.sub;
+
+        const result = await markAsPaidService(id, authUserId);
+
+        return reply.status(200).send({
+            success: true,
+            message:
+                "Pagamento sinalizado com sucesso. Aguardando confirmação do credor!",
+            data: result,
+        });
+    } catch (error: any) {
+        return handleSettlementError(error, reply);
+    }
+};
+
+export const confirmPaymentController = async (
+    req: FastifyRequest,
+    reply: FastifyReply,
+) => {
+    try {
+        const { id } = settlementIdParamSchema.parse(req.params);
+        const authUserId = req.user.sub;
+
+        const result = await confirmPaymentService(id, authUserId);
+
+        return reply.status(200).send({
+            success: true,
+            message: "Pagamento recebido e dívida liquidada!",
+            data: result,
+        });
+    } catch (error: any) {
+        return handleSettlementError(error, reply);
+    }
+};
+
+// Função auxiliar para não repetir os mesmos IFs nos dois controllers
+const handleSettlementError = (error: any, reply: FastifyReply) => {
+    if (error.name === "ZodError") {
+        return reply.status(422).send({
+            success: false,
+            error: {
+                code: "VALIDATION_ERROR",
+                message: "Dados inválidos na requisição.",
+                details: error.issues,
+            },
+        });
+    }
+
+    if (error.message === "SETTLEMENT_NOT_FOUND") {
+        return reply.status(404).send({
+            success: false,
+            error: {
+                code: "SETTLEMENT_NOT_FOUND",
+                message: "Acerto de conta não encontrado.",
+            },
+        });
+    }
+
+    if (error.message === "FORBIDDEN_PAYER") {
+        return reply.status(403).send({
+            success: false,
+            error: {
+                code: "FORBIDDEN",
+                message: "Apenas o devedor pode sinalizar o pagamento.",
+            },
+        });
+    }
+
+    if (error.message === "FORBIDDEN_RECEIVER") {
+        return reply.status(403).send({
+            success: false,
+            error: {
+                code: "FORBIDDEN",
+                message: "Apenas o credor pode confirmar o recebimento.",
+            },
+        });
+    }
+
+    if (error.message === "INVALID_STATUS_TRANSITION") {
+        return reply.status(400).send({
+            success: false,
+            error: {
+                code: "INVALID_STATUS",
+                message: "Ação não permitida para o status atual desta dívida.",
+            },
+        });
+    }
+
+    return reply.status(500).send({
+        success: false,
+        error: {
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Ocorreu um erro inesperado no servidor.",
+        },
+    });
 };
