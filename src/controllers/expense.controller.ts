@@ -166,6 +166,17 @@ export const updateExpenseController = async (
             });
         }
 
+        if (error.message === "MONTH_ALREADY_SETTLED") {
+            return reply.status(400).send({
+                success: false,
+                error: {
+                    code: "MONTH_ALREADY_SETTLED",
+                    message:
+                        "Não é possível alterar despesas de um mês que já teve a conta fechada.",
+                },
+            });
+        }
+
         if (error.message === "FORBIDDEN") {
             return reply.status(403).send({
                 success: false,
@@ -231,6 +242,17 @@ export const deleteExpenseController = async (
                 error: {
                     code: "EXPENSE_NOT_FOUND",
                     message: "Despesa não encontrada.",
+                },
+            });
+        }
+
+        if (error.message === "MONTH_ALREADY_SETTLED") {
+            return reply.status(400).send({
+                success: false,
+                error: {
+                    code: "MONTH_ALREADY_SETTLED",
+                    message:
+                        "Não é possível apagar despesas de um mês que já teve a conta fechada.",
                 },
             });
         }

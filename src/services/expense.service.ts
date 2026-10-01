@@ -4,6 +4,7 @@ import {
     expenseItems,
     households,
     householdMembers,
+    settlements,
 } from "../config/schema.js";
 import { eq, and, like, inArray, desc } from "drizzle-orm";
 import type {
@@ -168,6 +169,23 @@ export const updateExpenseService = async (
         .where(eq(expenses.id, expenseId));
 
     if (!existingExpense) throw new Error("EXPENSE_NOT_FOUND");
+
+    // Bloqueia a ação de edição/exclusão se o mês já estiver fechado
+    // Pega apenas o ano e mês da data da despesa (ex: "2026-09" de "2026-09-15")
+    const expenseMonth = existingExpense.expenseDate.substring(0, 7);
+
+    const monthSettlements = await db
+        .select()
+        .from(settlements)
+        .where(
+            and(
+                eq(settlements.householdId, existingExpense.householdId),
+                eq(settlements.referenceMonth, expenseMonth),
+            ),
+        )
+        .limit(1); // limit(1) deixa a busca mais rápida, pois só é preciso saber se existe 1 registro
+
+    if (monthSettlements.length > 0) throw new Error("MONTH_ALREADY_SETTLED");
 
     // Verifica se o usuário tem permissão (é membro da casa à qual a despesa já pertence).
     // Usa existingExpense.householdId por segurança, para evitar que o usuário tente "roubar"
